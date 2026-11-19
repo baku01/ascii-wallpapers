@@ -1,63 +1,79 @@
-# ASCII Wallpapers for Claude
+# ASCII Wallpapers para o Claude
 
-Twelve live ASCII wallpapers behind the chat in Claude Desktop. Each scene is real ASCII art, drawn in character cells that pulse, drift and flicker, and the window takes on the scene's own colours: grays tinted with its hue and panels frosted in its deep tone, so the chat stays easy to read.
+Doze papéis de parede ASCII animados atrás do chat no Claude Desktop. Cada cena é arte ASCII de verdade, desenhada em células de caracteres que pulsam, flutuam e cintilam. A janela assume as cores da própria cena, com cinzas tingidos pelo matiz dela e painéis foscos no seu tom mais profundo, e o chat continua fácil de ler.
 
-![The wallpapers](assets/preview.jpg)
+![Os papéis de parede](assets/preview.jpg)
 
 **Claude Code** · **Cloud Drift** · **Honu Lagoon** · **Koi Pond** · **Jellyfish** · **Paper Boats** · **Fireflies** · **Moonlit** · **Aurora** · **Neon Rain** · **Sakura** · **Snowfall**
 
-## Install
+## Instalação
 
-At the prompt of a terminal session of Claude Code:
+No prompt de uma sessão do Claude Code no terminal:
 
 ```
 /plugin install ascii-wallpapers --marketplace baku01/ascii-wallpapers
 ```
 
-Answer `y` to add the marketplace, then pick a scope (user scope puts it in every session).
+Responda `y` para adicionar o marketplace e escolha um escopo (o escopo de usuário vale para todas as sessões).
 
-From a shell:
+Pelo shell:
 
 ```bash
 claude plugin install ascii-wallpapers --marketplace baku01/ascii-wallpapers
 ```
 
-In the desktop app, where `/plugin` does not run: click **+** next to the prompt box, then **Plugins**, **Add marketplace** with `baku01/ascii-wallpapers`, then **Add plugin**.
+No app desktop, onde `/plugin` não roda: clique em **+** ao lado da caixa do prompt, depois em **Plugins**, **Add marketplace** com `baku01/ascii-wallpapers` e, por fim, **Add plugin**.
 
-Then start a new session in the Code tab of Claude Desktop.
+Depois, abra uma sessão nova na aba Code do Claude Desktop.
 
-## Use
+## Uso
 
-- `/wallpaper` opens the picker above the prompt. Click a wallpaper, or focus the picker and press `1`–`9`, `a`–`c` (`0` for off).
-- `/wallpaper aurora` (or any name, such as `/wallpaper neon rain`), `/wallpaper off`.
-- A pet sits on the prompt's edge and hops when you pick a wallpaper: Clawd the crab, or a cat, dog, ghost, frog, octopus, duck, bunny or robot, all in Clawd's pixel style. Pick one in the picker's Pets row (`q`–`o`, `p` for none) or with `/wallpaper pet cat`, `/wallpaper pet off`. `/wallpaper crab on|off` still works.
-- Your pick is kept for the next session.
+- `/wallpaper` abre o seletor acima do prompt. Clique num papel de parede ou, com o seletor em foco, use as teclas `1`–`9` e `a`–`c` (`0` desliga).
+- `/wallpaper aurora` (ou qualquer nome, como `/wallpaper neon rain`) e `/wallpaper off`.
+- Sua escolha fica guardada para a próxima sessão.
 
-## Build
+![O seletor](assets/picker.png)
 
-The scenes are generated: `scripts/scenes/` holds one module per wallpaper, and
+### Pets
+
+Um pet fica na borda do prompt e pula quando você escolhe um papel de parede. Além do Clawd, o caranguejo, há mais oito pets no mesmo estilo de pixel art: gato, cachorro, fantasma, sapo, polvo, pato, coelho e robô. Cada um tem seus quadros de animação (rabo, piscar, tentáculos, antena), flutua e solta faíscas ao pular.
+
+![Os pets](assets/pets.png)
+
+- Escolha na fileira **Pets** do seletor (teclas `q`–`o`, `p` para nenhum).
+- Ou pelo comando: `/wallpaper pet cat`, `/wallpaper pet robot`, `/wallpaper pet off`.
+- `/wallpaper crab on|off` continua funcionando.
+
+## Como as cenas são feitas
+
+As cenas são geradas: `scripts/scenes/` tem um módulo por papel de parede.
 
 ```bash
-node scripts/build.mjs                      # writes hooks/walls.js, hooks/scenes.js, hooks/colors.js
-node scripts/build.mjs --only aurora --preview /tmp/aw   # one scene, as HTML pages to look at
+node scripts/build.mjs                                   # gera hooks/walls.js, hooks/scenes.js e hooks/colors.js
+node scripts/build.mjs --only aurora --preview /tmp/aw   # uma cena, como páginas HTML para conferir
 ```
 
-A scene is rows of SVG text on a grid of 10 × 19 cells, shaded by density ramps and outline glyphs, moved and cross-faded by CSS animation (paused under reduced motion), and kept under the 131,072 characters a plugin's SVG may hold. The build also fails a scene that Claude Desktop would leave out for its complexity (custom-property names times unclosed brackets, tag nesting, paints, links), and spells `\ ( ) [ ] { } -` in text with look-alikes of the same width so the ASCII stays inside those limits. Desktop also stops animating a scene whose frames cost too much to check, so a scene should stay a few milliseconds a frame: no `textLength`, and far-off detail kept sparse. Each scene's window colours come from `makeColors` (`scripts/vendor/make-colors.js`, from Claude Code's plugin-authoring skill) with grays tinted by the scene's hue.
+- **Arte:** cada cena é feita de linhas de texto SVG numa grade de células de 10 × 19, sombreadas por rampas de densidade e glifos de contorno.
+- **Animação:** CSS move as peças continuamente e funde um quadro no outro, com pausa quando o sistema pede movimento reduzido.
+- **Tamanho:** cada cena fica abaixo dos 131.072 caracteres que o SVG de um plugin pode ter.
+- **Limites do Desktop:** o Claude Desktop descarta uma cena complexa demais. O build reprova a cena antes disso (nomes de propriedades CSS vezes colchetes abertos, aninhamento de tags, pinturas, links). No texto, `\ ( ) [ ] { } -` viram sósias da mesma largura, para a arte ASCII caber nesses limites.
+- **Desempenho:** o Desktop também congela uma cena cujos quadros custam caro demais para checar. Por isso a cena deve ficar em poucos milissegundos por quadro: sem `textLength` e com pouco detalhe nos planos distantes.
+- **Cores:** as cores da janela de cada cena vêm de `makeColors` (`scripts/vendor/make-colors.js`, da skill de criação de plugins do Claude Code), com os cinzas tingidos pelo matiz da cena.
 
-## Notes
+## Observações
 
-- Wallpapers draw in Claude Code sessions in Claude Desktop (and the mobile app). The Chat tab is claude.ai, where plugins don't run, and the terminal keeps its own look.
-- One theme at a time: turn off any other plugin that sets a theme.
-- Needs a Claude Code version whose desktop app draws plugin backdrops (2.1.325 or later).
+- Os papéis de parede aparecem nas sessões do Claude Code no Claude Desktop (e no app mobile). A aba Chat é o claude.ai, onde plugins não rodam, e o terminal mantém o visual dele.
+- Um tema por vez: desative qualquer outro plugin que defina tema.
+- Exige uma versão do Claude Code cujo app desktop desenhe fundos de plugins (2.1.325 ou mais nova).
 
-## Remove
+## Remover
 
 ```bash
 claude plugin uninstall ascii-wallpapers
 ```
 
-## Credits
+## Créditos
 
-Made by Pedro Correa. Based on [Handsher's ASCII Wallpapers](https://github.com/Handsher/ascii-wallpapers) and its concept film (https://x.com/handsher_NGU/status/2121399044560015748), whose wallpapers, picker and Clawd this grew from.
+Feito por Pedro Correa. Baseado no [ASCII Wallpapers do Handsher](https://github.com/Handsher/ascii-wallpapers) e no filme conceitual dele (https://x.com/handsher_NGU/status/2121399044560015748), de onde vieram os papéis de parede, o seletor e o Clawd.
 
-MIT License.
+Licença MIT.
