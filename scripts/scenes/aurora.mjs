@@ -3,7 +3,7 @@ import { Grid, ROUND, rasterize } from '../lib/ascii.mjs'
 import { CH, COLS, CW, H, W, clamp, fbm, noise, smooth } from '../lib/core.mjs'
 import { stars } from '../lib/shapes.mjs'
 
-const FRAMES = 4
+const FRAMES = 6
 // faint to bright, the bright end standing like rays
 const RAYS = " .':;!|"
 

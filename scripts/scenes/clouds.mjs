@@ -73,7 +73,7 @@ export default {
         const el = s.scale(s.group([haze(sh.w, sh.h), sh.draw({ 1: shade(sh.h) })]), d.k)
         const wide = sh.w * CW * d.k
         // each cloud crosses from beyond the right edge to beyond the left, evenly spaced along the loop
-        s.add(s.group([s.move(el, [[W + 40, d.ys[i]], [-wide - 40, d.ys[i]]], d.dur, { phase: (i + r() * 0.4) / d.count, step: CW * d.k })], { opacity: d.a }))
+        s.add(s.group([s.move(el, [[W + 40, d.ys[i]], [-wide - 40, d.ys[i]]], d.dur, { phase: (i + r() * 0.4) / d.count})], { opacity: d.a }))
       }
     })
 

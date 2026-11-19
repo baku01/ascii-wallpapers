@@ -65,7 +65,9 @@ function wake() {
 
 // The lake in one shimmer frame: ripple marks, finer and denser toward the horizon, longer near by;
 // under the afterglow they turn to the sky's colour (2).
-function water(f, glintX) {
+// frame f of `n`: the noise is read around a circle, so the last frame runs into the first
+function water(f, glintX, n) {
+  const a = (f / n) * Math.PI * 2, ox = Math.cos(a) * 0.9, oy = Math.sin(a) * 0.9
   const rows = Math.ceil((H - HORIZON) / CH)
   const g = new Grid(COLS, rows)
   for (let r = 0; r < rows; r++) {
@@ -73,10 +75,10 @@ function water(f, glintX) {
     const glyphs = z < 0.2 ? '-.-' : z < 0.55 ? '~-~' : '~-~_~'
     const scale = lerp(3, 10, z)
     for (let c = 0; c < COLS; c++) {
-      const n = fbm(c / scale + f * 0.9, r * 0.8 + f * 0.13, 17, 2)
+      const n = fbm(c / scale + ox, r * 0.8 + oy * 0.15, 17, 2)
       const near = Math.abs(c * CW - glintX) < 40 + z * 170
       const p = near ? 0.44 : lerp(0.6, 0.69, z)
-      if (n > p) g.set(c, r, glyphs[Math.floor(fbm(c / 2.3, r * 1.7 + f, 29, 1) * glyphs.length * 0.999)], near ? 2 : 1)
+      if (n > p) g.set(c, r, glyphs[Math.floor(fbm(c / 2.3 + ox, r * 1.7 + oy, 29, 1) * glyphs.length * 0.999)], near ? 2 : 1)
     }
   }
   return g
@@ -121,15 +123,15 @@ export default {
     }, { outline: ROUND, ramp: " .,:;+*", min: 0.25 })
     s.add(s.text(tops, { y: hillTop, paint: s.linear([[0, '#5f8f86'], [1, '#2b5a5a']], [0, 0, 0, hillRows * CH]), opacity: 0.8 }))
 
-    // the lake's ripples, shimmering through three frames
+    // the lake's ripples, shimmering through six frames
     const rows = Math.ceil((H - HORIZON) / CH)
     const ripple = s.linear([[0, '#9fd0cb', 0.6], [0.5, '#6aa9a6', 0.45], [1, '#4d8f8f', 0.35]], [0, 0, 0, rows * CH])
     const glint = s.linear([[0, '#ffe1c2', 0.9], [1, '#ffc79a', 0.35]], [0, 0, 0, rows * CH])
-    const frames = [0, 1, 2].map(f => {
-      const g = water(f, gx)
+    const frames = [0, 1, 2, 3, 4, 5].map(f => {
+      const g = water(f, gx, 6)
       return s.group([s.text(g, { m: 1, paint: ripple, cls: 'r' }), s.text(g, { m: 2, paint: glint })])
     })
-    s.add(s.group([s.frames(frames, 3.6)], { y: HORIZON }))
+    s.add(s.group([s.frames(frames, 6)], { y: HORIZON }))
 
     // the boats: one shape, every boat a copy; nearer ones bigger, lower and brighter
     const hull = s.sprite(boat()), mirror = s.sprite(reflect(boat())), trail = s.sprite(wake())

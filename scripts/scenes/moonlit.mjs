@@ -85,7 +85,7 @@ export default {
     for (const w of wisps) {
       const sh = shapes[w.sh]
       const paint = s.linear([[0, '#aab8e6'], [1, '#56679f']], [0, 0, 0, sh.h * CH])
-      s.add(s.group([s.move(sh.draw({ 1: paint }), [[W + 40, w.y], [-sh.w * CW - 40, w.y]], w.dur, { phase: w.phase, step: CW })], { opacity: w.a }))
+      s.add(s.group([s.move(sh.draw({ 1: paint }), [[W + 40, w.y], [-sh.w * CW - 40, w.y]], w.dur, { phase: w.phase})], { opacity: w.a }))
     }
 
     // dark hills along the foot of the night: a solid silhouette, a faint glyph texture over it

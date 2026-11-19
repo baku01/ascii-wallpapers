@@ -66,3 +66,24 @@ test('the picker lists every wallpaper, and a pick sets it', async ($, on) => {
   expect(sets.at(-1)!.backdrop.scene).toBe('aw-aurora-5')
   await ui.unmount()
 })
+
+test('a pet sits on the prompt, and the picker swaps it', async ($, on) => {
+  engine(on)
+  await $.session.start({ cwd: '/', surface: 'desktop', isInteractive: true })
+  await $.command.run({ command: 'wallpaper', args: 'moonlit' } as never)
+  expect(JSON.stringify(await $.command.run({ command: 'wallpaper', args: 'pet cat' } as never))).toContain('Cat sits on the prompt.')
+  let ui = await $.ui.mount({ ...BAND, surface: 'desktop' })
+  expect((await ui.find({ type: 'Svg' }) as { props?: { alt?: string } } | undefined)?.props?.alt).toBe('Cat')
+  await ui.unmount()
+
+  await $.command.run({ command: 'wallpaper', args: '' } as never)
+  ui = await $.ui.mount({ ...BAND, surface: 'desktop' })
+  await ui.press({ key: 'pet-robot' })
+  await ui.unmount()
+  ui = await $.ui.mount({ ...BAND, surface: 'desktop' })
+  expect((await ui.find({ type: 'Svg' }) as { props?: { alt?: string } } | undefined)?.props?.alt).toBe('Robot')
+  await ui.unmount()
+
+  expect(JSON.stringify(await $.command.run({ command: 'wallpaper', args: 'pet off' } as never))).toContain('No pet')
+  expect(JSON.stringify(await $.command.run({ command: 'wallpaper', args: 'crab on' } as never))).toContain('Clawd is back.')
+})

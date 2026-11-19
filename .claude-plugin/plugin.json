@@ -1,8 +1,11 @@
 {
   "name": "ascii-wallpapers",
-  "version": "2.0.0",
-  "description": "Twelve live ASCII wallpapers behind the chat in Claude Desktop, with window colours tinted to each scene, a picker and Clawd the crab",
-  "author": { "name": "Pedro Correa", "url": "https://github.com/baku01" },
+  "version": "2.1.0",
+  "description": "Twelve live ASCII wallpapers behind the chat in Claude Desktop, with window colours tinted to each scene, a picker and a pixel pet: Clawd the crab and eight friends",
+  "author": {
+    "name": "Pedro Correa",
+    "url": "https://github.com/baku01"
+  },
   "homepage": "https://github.com/baku01/ascii-wallpapers",
   "license": "MIT",
   "types": "./types/index.d.ts"

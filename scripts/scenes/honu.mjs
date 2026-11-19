@@ -97,7 +97,10 @@ function grass(f) {
 }
 
 // A sea turtle from above, facing +u: shell (1), head and flippers (2). Frame f paddles.
+// the flippers sweep through `PADDLE` frames, from reaching forward to pulled back and forward again
+const PADDLE = 4
 function turtle(u, v, f) {
+  const w = (1 - Math.cos((f / PADDLE) * Math.PI * 2)) / 2
   const d = Math.hypot(u / 78, v / 62)
   if (d < 1) {
     let l = 0.95 - 0.35 * d
@@ -109,7 +112,7 @@ function turtle(u, v, f) {
   if (u < -74 && u > -96 && Math.abs(v) < 5 - (-74 - u) * 0.2) return { m: 2, l: 0.4 }
   for (const s of [-1, 1]) {
     // front flippers sweep from reaching forward to pulled back
-    for (const [ru, rv, deg, len, wid] of [[38, 50, f ? 108 : 52, 82, 17], [-56, 38, f ? 128 : 152, 34, 12]]) {
+    for (const [ru, rv, deg, len, wid] of [[38, 50, 52 + 56 * w, 82, 17], [-56, 38, 152 - 24 * w, 34, 12]]) {
       const a = (deg * Math.PI) / 180, du = u - ru, dv = v - s * rv
       const along = du * Math.cos(a) + dv * s * Math.sin(a)
       const across = -du * Math.sin(a) + dv * s * Math.cos(a)
@@ -187,7 +190,7 @@ export default {
       const fr = s.frames([0, 1].map(f => s.text(school(sc.right, f, sc.big), { paint: s.solid(sc.c) })), 0.8, sc.phase)
       const bob = s.sway(fr, 0, 14, 5 + sc.dur / 20, sc.phase)
       const [a, b] = sc.right ? [-200, W + 40] : [W + 40, -200]
-      s.add(s.group([s.move(bob, [[a, sc.y], [b, sc.y + 40]], sc.dur, { phase: sc.phase, step: CW })], { opacity: 0.85 }))
+      s.add(s.group([s.move(bob, [[a, sc.y], [b, sc.y + 40]], sc.dur, { phase: sc.phase})], { opacity: 0.85 }))
     }
 
     // the manta, gliding across the upper lagoon with slow wingbeats
@@ -197,7 +200,7 @@ export default {
     s.add(s.move(mantaBody, [[W + 120, 160], [1400, 230], [900, 190], [400, 260], [-480, 210]], 110, { phase: 0.3 }))
 
     // sea turtles paddling loops on either side
-    const turtles = headings(s, { n: 8, frames: 2, w: 32, h: 17, shape: turtle, remap: (ch, m) => (m === 2 ? SKIN[ch] ?? ch : ch) })
+    const turtles = headings(s, { n: 8, frames: PADDLE, w: 32, h: 17, shape: turtle, remap: (ch, m) => (m === 2 ? SKIN[ch] ?? ch : ch) })
     const shellPaint = s.radial([[0, '#f6dd96'], [0.5, '#c39a50'], [1, '#6d562b']], [160, 161, 90])
     const turtlePaints = { 1: shellPaint, 2: s.solid('#c5dba6') }
     const shadow = s.glow(16, 24, 140, '#043140', 0.4)
@@ -207,7 +210,7 @@ export default {
       { pts: loop(1450, 200, 280, 100, { tilt: 0.1, wobble: 0.15, dir: 1, seed: 2 }), dur: 96, phase: 0.8, k: 0.6 },
     ]
     for (const p of paths) {
-      s.add(swim(s, turtles, turtlePaints, { pts: p.pts, dur: p.dur, phase: p.phase, beat: 2.2, w: 32, h: 17, scale: p.k, under: shadow }))
+      s.add(swim(s, turtles, turtlePaints, { pts: p.pts, dur: p.dur, phase: p.phase, beat: 3.2, w: 32, h: 17, scale: p.k, under: shadow }))
     }
   },
 }

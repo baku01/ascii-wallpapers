@@ -122,22 +122,27 @@ export default {
       const el = sprites[k]({ 1: s.linear([[0, body[0]], [1, body[1]]], [0, 0, 0, g.h * CH]), 2: s.solid(snow), 3: s.solid(trunk) })
       return s.group([s.scale(el, scale)], { x: x - (g.w * CW * scale) / 2, y: base - g.h * CH * scale })
     }
-    // far: small and pale along the ridge
-    const far = []
-    for (let x = 30; x < W; x += 70 + r() * 110) {
-      far.push(tree(r() < 0.5 ? 0 : 1, x, H * 0.66 + r() * 20, 0.38 + r() * 0.16, ['#7189ad', '#4a6185'], '#b4c7e0', '#3a4a66'))
+    // A row of pines stamped into one grid at one scale: a few dozen lines of text for the whole row, where a
+    // copy per tree would be hundreds, which Desktop's per-frame check can't afford.
+    const forest = (spots, scale, base, body, snow, trunk) => {
+      const rows = Math.max(...spots.map(([k]) => PINES[k].h)) + 2
+      const g = new Grid(Math.ceil(W / CW / scale), rows)
+      for (const [k, x, lift] of spots) g.stamp(PINES[k], Math.round(x / CW / scale - PINES[k].w / 2), rows - PINES[k].h - lift)
+      const paints = { 1: s.linear([[0, body[0]], [1, body[1]]], [0, 0, 0, rows * CH]), 2: s.solid(snow), 3: s.solid(trunk) }
+      return s.group([s.scale(s.group(g.materials().map(m => s.text(g, { m, paint: paints[m] }))), scale)], { y: base - rows * CH * scale })
     }
-    s.add(s.group(far, { opacity: 0.6 }))
+    // far: small and pale along the ridge
+    const farSpots = []
+    for (let x = 30; x < W; x += 140 + r() * 120) farSpots.push([r() < 0.5 ? 0 : 1, x, Math.floor(r() * 2)])
+    s.add(s.group([forest(farSpots, 0.46, H * 0.68, ['#7189ad', '#4a6185'], '#b4c7e0', '#3a4a66')], { opacity: 0.6 }))
 
     // the far snow falls behind the nearer trees
     s.add(s.sway(s.move(s.tile(flakes(r, 42, 21, 46, '..,'), { color: '#c6d8f2', tw: 420, th: 399, opacity: 0.35, cls: 'r' }), [[0, 0], [0, 399]], 38), 30, 0, 8))
 
     // mid: along both sides
-    const mid = []
-    for (const [a, b] of [[0, 0.3], [0.72, 1]]) {
-      for (let x = a * W + 20; x < b * W; x += 90 + r() * 90) mid.push(tree(1, x, H * 0.76 + r() * 24, 0.7 + r() * 0.2, ['#3f6a7c', '#244559'], '#d3e1f2', '#2a2f3f'))
-    }
-    s.add(...mid)
+    const midSpots = []
+    for (const [a, b] of [[0, 0.3], [0.72, 1]]) for (let x = a * W + 20; x < b * W; x += 90 + r() * 90) midSpots.push([1, x, Math.floor(r() * 2)])
+    s.add(forest(midSpots, 0.8, H * 0.78, ['#3f6a7c', '#244559'], '#d3e1f2', '#2a2f3f'))
 
     // the snowy ground, drifts rising toward the sides: a soft field, sparkles, and the lines of the drifts
     const g0 = H * 0.76

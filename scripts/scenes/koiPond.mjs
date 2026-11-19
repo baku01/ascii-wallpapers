@@ -50,10 +50,11 @@ function pond() {
 
 // A koi from above, facing +u, its body (1) patched with colour (2, 3) and its fins (4) pale. Frame f
 // swings the tail.
-function koi(seed) {
+// `frames` tail beats a cycle: the tail swings on a sine through them
+function koi(seed, frames) {
   return (u, v, f) => {
     const L = 172, t = (u + L / 2) / L
-    const swing = (f ? 1 : -1) * 9
+    const swing = Math.cos((f / frames) * Math.PI * 2) * 9
     const bend = swing * (1 - Math.min(1, t * 1.3)) ** 1.6
     const vv = v - (t < 0 ? swing * 1.05 + (t * -1) * swing * 0.6 : bend)
     if (t >= 0 && t <= 1.02) {
@@ -119,8 +120,8 @@ export default {
     }
     s.add(s.move(s.tile(grain, { color: '#cdf3df', tw: 480, th: 456, opacity: 0.08, cls: 'r' }), [[0, 0], [480, 0]], 180))
 
-    // koi, under the pads: one koi at every heading with two tail beats, each swimmer in its variety's colours
-    const koiSprites = headings(s, { n: 12, frames: 2, w: 28, h: 15, shape: koi(3.1) })
+    // koi, under the pads: one koi at every heading with four tail beats, each swimmer in its variety's colours
+    const koiSprites = headings(s, { n: 12, frames: 4, w: 28, h: 15, shape: koi(3.1, 4) })
     const shadow = s.glow(10, 18, 110, '#06231b', 0.45)
     const swimmers = [
       { v: 0, pts: loop(420, 520, 250, 190, { tilt: 0.4, wobble: 0.2, dir: 1, seed: 1 }), dur: 52, phase: 0.1, k: 1.05 },
@@ -131,7 +132,7 @@ export default {
     ]
     for (const k of swimmers) {
       const paints = Object.fromEntries(Object.entries(VARIETIES[k.v]).map(([m, c]) => [m, s.solid(c)]))
-      s.add(s.group([swim(s, koiSprites, paints, { pts: k.pts, dur: k.dur, phase: k.phase, beat: 0.9, w: 28, h: 15, scale: k.k, under: shadow })], { opacity: 0.95 }))
+      s.add(s.group([swim(s, koiSprites, paints, { pts: k.pts, dur: k.dur, phase: k.phase, beat: 1.3, w: 28, h: 15, scale: k.k, under: shadow })], { opacity: 0.95 }))
     }
 
     // rings spreading

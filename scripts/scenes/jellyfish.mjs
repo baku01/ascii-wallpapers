@@ -3,7 +3,7 @@ import { Grid, ROUND, rasterize } from '../lib/ascii.mjs'
 import { CH, CW, H, W, clamp, num } from '../lib/core.mjs'
 import { specks } from '../lib/shapes.mjs'
 
-const FRAMES = 4
+const FRAMES = 8
 const GW = 28, GH = 26
 
 // One jellyfish in a pulse's frame f: bell (1), its inner lobes (2), tentacles (3), oral arms and rim (4).
