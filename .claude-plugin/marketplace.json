@@ -1,5 +1,5 @@
 {
   "name": "ascii-wallpapers",
-  "owner": { "name": "Handsher" },
-  "plugins": [{ "name": "ascii-wallpapers", "source": "./", "description": "Eight live ASCII wallpapers behind the chat in Claude Desktop" }]
+  "owner": { "name": "Pedro Correa", "url": "https://github.com/baku01" },
+  "plugins": [{ "name": "ascii-wallpapers", "source": "./", "description": "Twelve live ASCII wallpapers behind the chat in Claude Desktop" }]
 }

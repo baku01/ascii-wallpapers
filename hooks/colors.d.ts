@@ -1,2 +1,3 @@
 import type { ThemeColors } from 'claude-code'
-export const COLORS: Record<'clawd' | 'clouds' | 'honu' | 'koiPond' | 'jellyfish' | 'paperBoats' | 'fireflies' | 'moonlit', ThemeColors>
+import type { Key } from './walls.js'
+export const COLORS: Record<Key, ThemeColors>
