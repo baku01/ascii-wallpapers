@@ -6,6 +6,7 @@ import { writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
+import { limits, pastLimit } from './lib/limits.mjs'
 import { look } from './lib/palette.mjs'
 import { Scene } from './lib/scene.mjs'
 import { SCENES as LISTED } from './scenes/index.mjs'
@@ -26,12 +27,15 @@ for (const def of SCENES) {
   def.build(s)
   const svg = s.svg(def.text)
   if (svg.length > LIMIT) throw new Error(`${def.key}: ${svg.length} characters, over the ${LIMIT} an Svg may hold`)
+  const past = pastLimit(svg)
+  if (past) throw new Error(`${def.key}: ${past.what} ${past.value} > ${past.most}; Claude Desktop would leave the scene out`)
   const { colors: theme, glass, problems } = look(def)
   scenes[def.key] = svg
   cards[def.key] = s.card()
   colors[def.key] = theme
   walls.push({ key: def.key, name: def.name, tone: def.tone, acc: def.accent, alt: def.alt, glass })
-  console.log(`${def.key.padEnd(11)} ${String(svg.length).padStart(6)} chars  card ${String(cards[def.key].length).padStart(5)}  ${problems.length} contrast notes`)
+  const budget = limits(svg).map(l => `${l.what.split(' ')[0]} ${l.value}/${l.most}`).filter((_, i) => i === 1 || i === 4).join(', ')
+  console.log(`${def.key.padEnd(11)} ${String(svg.length).padStart(6)} chars  card ${String(cards[def.key].length).padStart(5)}  ${budget}  ${problems.length} contrast notes`)
 }
 
 if (!only && !file) {

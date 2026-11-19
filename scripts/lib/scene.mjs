@@ -3,8 +3,12 @@
 import { ink } from './ascii.mjs'
 import { BASE, CH, CW, H, W, clamp, hex, lerp, num, rgb, rng } from './core.mjs'
 
-// the engine refuses an Svg holding '/*' outside a CSS comment, so a '*' after a '/' sits in a tspan of its own
-const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\/\*/g, '/<tspan>*</tspan>')
+// Glyphs as the markup spells them. Claude Desktop measures a scene before it draws it and leaves out one whose
+// '\\' marks, '--' runs and unclosed brackets add up past its limits, so those glyphs are swapped for look-alikes
+// of the same width in Menlo; and the engine refuses '/*' outside a CSS comment, so a '*' after a '/' sits in a
+// tspan of its own.
+const SWAP = { '\\': '∖', '(': '❨', ')': '❩', '{': '❴', '}': '❵', '[': '⌈', ']': '⌉', '-': '‐' }
+const esc = s => [...s].map(c => SWAP[c] ?? c).join('').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\/\*/g, '/<tspan>*</tspan>')
 
 // Gradient stops are [offset, colour] or [offset, colour, opacity].
 function stopsSvg(stops) {
@@ -83,10 +87,9 @@ export class Scene {
   text(grid, { paint, m, x = 0, y = 0, opacity = 1, cls } = {}) {
     const rows = grid.runs(m)
     if (!rows.length) return { svg: '', ops: [] }
-    const body = rows.map(([r, c, s]) => {
-      const len = [...s].length
-      return `<text x="${c * CW}" y="${r * CH + BASE}"${len > 1 ? ` textLength="${len * CW}"` : ''}>${esc(s)}</text>`
-    }).join('')
+    // no textLength: the font is sized so a glyph's advance is one cell, and textLength makes every repaint
+    // lay each glyph out again, which Desktop's per-frame check can't afford
+    const body = rows.map(([r, c, s]) => `<text x="${c * CW}" y="${r * CH + BASE}">${esc(s)}</text>`).join('')
     const attrs = [
       x || y ? ` transform="translate(${num(x)} ${num(y)})"` : '',
       // a CSS variable can't be a presentation attribute
@@ -134,18 +137,20 @@ export class Scene {
   // ---------- motion ----------
 
   // An element wrapped in a CSS animation. `phase` (0..1) is where in its cycle the animation starts.
-  animate(el, name, dur, { phase = 0, timing = 'linear', vars = '' } = {}) {
+  // `at` is where it stands without animation: Desktop shows a still copy of the scene with every animation
+  // taken out until the moving one plays, and falls back to it.
+  animate(el, name, dur, { phase = 0, timing = 'linear', vars = '', at } = {}) {
     const delay = -(phase % 1) * dur
     const style = `${vars}animation:${name} ${num(dur)}s ${num(delay)}s ${timing} infinite`
-    return { svg: `<g style="${style}">${el.svg}</g>`, ops: el.ops }
+    const base = at ? ` transform="translate(${num(at[0])} ${num(at[1])})"` : ''
+    return { svg: `<g${base} style="${style}">${el.svg}</g>`, ops: el.ops }
   }
 
   // Travels through points (scene units) at an even speed, looping from the last to the first.
-  // `step` moves it in jumps of that many units, as text moves a cell at a time.
-  move(el, pts, dur, { phase = 0, step = 0 } = {}) {
+  move(el, pts, dur, { phase = 0 } = {}) {
     const segs = pts.slice(1).map((p, i) => Math.hypot(p[0] - pts[i][0], p[1] - pts[i][1]))
     const total = segs.reduce((a, b) => a + b, 0) || 1
-    // where it stands when the scene opens, for the thumbnail
+    // where it stands when the scene opens, for the thumbnail and the still copy
     let d = (phase % 1) * total, i = 0
     while (i < segs.length - 1 && d > segs[i]) d -= segs[i++]
     const k = segs[i] ? d / segs[i] : 0
@@ -154,17 +159,15 @@ export class Scene {
     if (pts.length === 2) {
       const [[x0, y0], [x1, y1]] = pts
       const name = this.keyframes('from{transform:translate(var(--x0),var(--y0))}to{transform:translate(var(--x1),var(--y1))}')
-      const timing = step ? `steps(${Math.max(1, Math.round(total / step))})` : 'linear'
-      return this.animate(placed, name, dur, { phase, timing, vars: `--x0:${num(x0)}px;--y0:${num(y0)}px;--x1:${num(x1)}px;--y1:${num(y1)}px;` })
+      return this.animate(placed, name, dur, { phase, at, vars: `--x0:${num(x0)}px;--y0:${num(y0)}px;--x1:${num(x1)}px;--y1:${num(y1)}px;` })
     }
     let acc = 0
     const body = pts.map((p, j) => {
       const pct = (acc / total) * 100
-      const tf = step && j < segs.length ? `;animation-timing-function:steps(${Math.max(1, Math.round(segs[j] / step))})` : ''
       if (j < segs.length) acc += segs[j]
-      return `${num(pct)}%{transform:translate(${num(p[0])}px,${num(p[1])}px)${tf}}`
+      return `${num(pct)}%{transform:translate(${num(p[0])}px,${num(p[1])}px)}`
     }).join('')
-    return this.animate(placed, this.keyframes(body), dur, { phase })
+    return this.animate(placed, this.keyframes(body), dur, { phase, at })
   }
 
   // A gentle back-and-forth by (dx, dy), eased.
@@ -187,15 +190,21 @@ export class Scene {
     return { ...this.animate(el, name, dur, { phase, timing: 'ease-in-out' }), ops: lit ? el.ops : [] }
   }
 
-  // Shows the elements one after another, each for an equal share of `dur`.
-  frames(els, dur, phase = 0) {
+  // Shows the elements one after another, each for an equal share of `dur`, each fading into the next over
+  // half its share so the glyphs melt from frame to frame. `discrete` swaps them outright instead.
+  frames(els, dur, phase = 0, { discrete = false } = {}) {
     const n = els.length
     if (n === 1) return els[0]
-    const name = this.keyframes(`0%{visibility:visible}${num(100 / n)}%,100%{visibility:hidden}`)
+    const slot = 100 / n, f = slot / 2
+    const name = this.keyframes(discrete
+      ? `0%{visibility:visible}${num(slot)}%,100%{visibility:hidden}`
+      : `0%{opacity:.5}${num(f / 2)}%,${num(slot - f / 2)}%{opacity:1}${num(slot + f / 2)}%,${num(100 - f / 2)}%{opacity:0}100%{opacity:.5}`)
     const shown = Math.floor(((phase % 1) + 1) % 1 * n) % n
     const svg = els.map((e, i) => {
       const delay = -(((n - i) % n) / n + (phase % 1)) * dur
-      return `<g style="animation:${name} ${num(dur)}s ${num(delay % dur)}s step-end infinite">${e.svg}</g>`
+      // only the frame showing as the scene opens is drawn in the still copy
+      const base = i === shown ? '' : discrete ? ' visibility="hidden"' : ' opacity="0"'
+      return `<g${base} style="animation:${name} ${num(dur)}s ${num(delay % dur)}s ${discrete ? 'step-end' : 'linear'} infinite">${e.svg}</g>`
     }).join('')
     return { svg: `<g>${svg}</g>`, ops: els[shown].ops }
   }
@@ -207,9 +216,10 @@ export class Scene {
 
   // ---------- output ----------
 
-  svg({ font = 16, weight = 700 } = {}) {
+  // 16.6px: Menlo's advance (0.602em) is then one 10-unit cell
+  svg({ font = 16.6, weight = 700 } = {}) {
     const keyframes = [...this.kfs].map(([body, name]) => `@keyframes ${name}{${body}}`).join('')
-    const style = `text{font:${weight} ${font}px ui-monospace,SFMono-Regular,Menlo,Consolas,"DejaVu Sans Mono",monospace;white-space:pre}`
+    const style = `text{font:${weight} ${font}px Menlo,ui-monospace,SFMono-Regular,"DejaVu Sans Mono",Consolas,monospace;white-space:pre}`
       + 'g{transform-box:view-box;transform-origin:0 0}.r{font-weight:400}'
       + this.css.join('')
       + keyframes

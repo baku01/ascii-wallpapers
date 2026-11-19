@@ -184,7 +184,7 @@ export default {
 
     // rain in three depths, nearer falling faster and brighter
     for (const [count, len, glyph, color, a, dur] of [[110, 1, "'", '#6a74a8', 0.22, 4.6], [70, 2, '/', '#8590c4', 0.3, 2.7], [34, 3, '/', '#b4bfec', 0.42, 1.7]]) {
-      s.add(s.move(s.tile(rain(r, count, len, glyph), { color, tw: 600, th: 1140, opacity: a, cls: len === 1 ? 'r' : undefined }), [[0, 0], [-600, 1140]], dur, { step: 57 }))
+      s.add(s.move(s.tile(rain(r, count, len, glyph), { color, tw: 600, th: 1140, opacity: a, cls: len === 1 ? 'r' : undefined }), [[0, 0], [-600, 1140]], dur))
     }
   },
 }

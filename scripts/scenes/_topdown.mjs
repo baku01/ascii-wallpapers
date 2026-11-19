@@ -58,9 +58,12 @@ export function swim(s, sprites, paints, { pts, dur, phase = 0, beat = 1.2, w, h
       acc += len
     })
     keys.push(`100%{opacity:${last}}`)
-    const body = s.frames(sprites[k].map(place => place(paints)), beat, phase * 3.7)
+    // quick beats swap outright: a fade would draw two swimmers through every beat
+    const body = s.frames(sprites[k].map(place => place(paints)), beat, phase * 3.7, { discrete: true })
     const shown = s.animate(body, s.keyframes(keys.join('')), dur, { phase, timing: 'step-end' })
-    return { svg: shown.svg, ops: k === legHeading[leg] ? shown.ops : [] }
+    const now = k === legHeading[leg]
+    // the still copy of the scene, with no animation, shows only the heading it opens on
+    return { svg: now ? shown.svg : shown.svg.replace(/^<g/, '<g opacity="0"'), ops: now ? shown.ops : [] }
   })
   // `under` (a shadow, say) sits beneath it, in units from its centre; `scale` sizes the whole swimmer
   const centred = s.group([...(under ? [under] : []), s.group(copies, { x: (-w * CW) / 2, y: (-h * CH) / 2 })])

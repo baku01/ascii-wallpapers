@@ -69,7 +69,7 @@ export default {
       const color = r() < 0.35 ? '#d98a6a' : '#b8a395'
       const el = s.text(g, { paint: s.solid(color), opacity: a, cls: r() < 0.5 ? 'r' : undefined })
       const dur = 60 + r() * 70
-      s.add(s.move(el, [[x, H + 30], [x, -40]], dur, { phase: r(), step: CH }))
+      s.add(s.move(el, [[x, H + 30], [x, -40]], dur, { phase: r()}))
     }
 
     // the spark: a soft breathing glow, then the rays turning a frame at a time
